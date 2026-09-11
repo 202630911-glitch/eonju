@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>어디있니 야 - 잃어버린 준비물 찾기</title>
+  <style>
+    :root {
+      --primary-color: #4F46E5;
+      --primary-hover: #4338CA;
+      --bg-color: #F3F4F6;
+      --card-bg: #FFFFFF;
+      --text-color: #1F2937;
+      --sub-text: #6B7280;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      width: 100%;
+      max-width: 500px;
+      padding: 30px 24px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: var(--primary-color);
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 0.95rem;
+      color: var(--sub-text);
+    }
+
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .step-indicator::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: #E5E7EB;
+      z-index: 1;
+      transform: translateY(-50%);
+    }
+
+    .step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #E5E7EB;
+      color: var(--sub-text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 0.9rem;
+      position: relative;
+      z-index: 2;
+      transition: all 0.3s ease;
+    }
+
+    .step-dot.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .step-dot.completed {
+      background-color: #10B981;
+      color: white;
+    }
+
+    .question-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .option-btn {
+      background-color: #F9FAFB;
+      border: 2px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 16px 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .option-btn .icon {
+      font-size: 1.8rem;
+    }
+
+    .option-btn:hover {
+      border-color: var(--primary-color);
+      background-color: #EEF2FF;
+    }
+
+    .option-btn.selected {
+      border-color: var(--primary-color);
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .result-container {
+      display: none;
+      text-align: left;
+    }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .result-header h2 {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+
+    .result-card {
+      background-color: #F9FAFB;
+      border-left: 4px solid var(--primary-color);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .result-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-card p {
+      font-size: 0.9rem;
+      color: #4B5563;
+      line-height: 1.5;
+    }
+
+    .reset-btn {
+      width: 100%;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: background-color 0.2s;
+    }
+
+    .reset-btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .step-content {
+      display: none;
+    }
+
+    .step-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>어디있니 야!</h1>
+    <p>당황하지 말고 차근차근 찾아보자 🔍</p>
+  </header>
+
+  <!-- 단계 표시기 -->
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot-1">1</div>
+    <div class="step-dot" id="dot-2">2</div>
+    <div class="step-dot" id="dot-3">3</div>
+    <div class="step-dot" id="dot-4">결과</div>
+  </div>
+
+  <!-- 1단계: 무엇을? -->
+  <div class="step-content active" id="step-1">
+    <div class="question-title">1. 무엇을 잃어버렸니?</div>
+    <div class="options-grid">
+      <button class="option-btn" onclick="selectOption(1, 'what', 'small_tech')">
+        <span class="icon">🎧</span>
+        <span>무선이어폰/립밤</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(1, 'what', 'wallet')">
+        <span class="icon">💳</span>
+        <span>지갑/카드/학생증</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(1, 'what', 'phone')">
+        <span class="icon">📱</span>
+        <span>핸드폰/태블릿</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(1, 'what', 'stationery')">
+        <span class="icon">✏️</span>
+        <span>필통/문구류</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(1, 'what', 'clothes')">
+        <span class="icon">👓</span>
+        <span>안경/모자/외투</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(1, 'what', 'umbrella')">
+        <span class="icon">☂️</span>
+        <span>우산/텀블러</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2단계: 어디서? -->
+  <div class="step-content" id="step-2">
+    <div class="question-title">2. 평소 자주 있거나 마지막 장소는?</div>
+    <div class="options-grid">
+      <button class="option-btn" onclick="selectOption(2, 'where', 'classroom')">
+        <span class="icon">🏫</span>
+        <span>교실/강의실/책상</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(2, 'where', 'home')">
+        <span class="icon">🏠</span>
+        <span>집 (방/거실/현관)</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(2, 'where', 'transit')">
+        <span class="icon">🚌</span>
+        <span>대중교통/길거리</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(2, 'where', 'restroom')">
+        <span class="icon">🚽</span>
+        <span>화장실/세면대</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(2, 'where', 'cafe')">
+        <span class="icon">☕</span>
+        <span>매점/식당/카페</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(2, 'where', 'library')">
+        <span class="icon">📚</span>
+        <span>도서관/독서실</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 3단계: 뭐 하다가? -->
+  <div class="step-content" id="step-3">
+    <div class="question-title">3. 잃어버릴 당시 뭐 하고 있었어?</div>
+    <div class="options-grid">
+      <button class="option-btn" onclick="selectOption(3, 'action', 'study')">
+        <span class="icon">✍️</span>
+        <span>수업/공부하는 중</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(3, 'action', 'moving')">
+        <span class="icon">🏃</span>
+        <span>장소 이동/체육활동</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(3, 'action', 'eating')">
+        <span class="icon">🍱</span>
+        <span>밥/음료 마시는 중</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(3, 'action', 'packing')">
+        <span class="icon">🧹</span>
+        <span>가방 정리/옷 벗기</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(3, 'action', 'phone_use')">
+        <span class="icon">📱</span>
+        <span>폰 보기/친구와 수다</span>
+      </button>
+      <button class="option-btn" onclick="selectOption(3, 'action', 'unknown')">
+        <span class="icon">❓</span>
+        <span>기억 안 남/멍때림</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="result-container" id="result">
+    <div class="result-header">
+      <h2>🎯 여기를 뒤져봐 야!</h2>
+      <p>너의 답변을 바탕으로 분석한 수색 포인트야</p>
+    </div>
+
+    <div id="recommendations">
+      <!-- 자바스크립트로 추천 장소 삽입 -->
+    </div>
+
+    <button class="reset-btn" onclick="resetForm()">처음부터 다시 찾기 🔄</button>
+  </div>
+</div>
+
+<script>
+  // 사용자 선택 데이터 저장
+  const selections = {
+    what: '',
+    where: '',
+    action: ''
+  };
+
+  // 선택지 클릭 시 실행 함수
+  function selectOption(step, key, value) {
+    selections[key] = value;
+
+    // 단계 업데이트
+    document.getElementById(`step-${step}`).classList.remove('active');
+    document.getElementById(`dot-${step}`).classList.remove('active');
+    document.getElementById(`dot-${step}`).classList.add('completed');
+
+    if (step < 3) {
+      const nextStep = step + 1;
+      document.getElementById(`step-${nextStep}`).classList.add('active');
+      document.getElementById(`dot-${nextStep}`).classList.add('active');
+    } else {
+      // 3단계 완료 시 결과 계산
+      document.getElementById('dot-4').classList.add('active');
+      showResults();
+    }
+  }
+
+  // 결과 계산 및 출력 함수
+  function showResults() {
+    document.getElementById('result').style.display = 'block';
+    const recContainer = document.getElementById('recommendations');
+    recContainer.innerHTML = '';
+
+    const recs = calculateRecommendations(selections.what, selections.where, selections.action);
+
+    recs.forEach((item, index) => {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      card.innerHTML = `
+        <h3>${index + 1}. ${item.title}</h3>
+        <p>${item.desc}</p>
+      `;
+      recContainer.appendChild(card);
+    });
+  }
+
+  // 추천 로직 계산기
+  function calculateRecommendations(what, where, action) {
+    let results = [];
+
+    // 1. 물건 특성 기반 기본 추천
+    if (what === 'small_tech') {
+      results.push({
+        title: "가방 바닥 틈새 & 외투 주머니 깊숙한 곳",
+        desc: "작은 물건은 가방 밑창 접힌 부분이나 주머니 안쪽에 잘 파묻혀! 가방을 뒤집어서 털어봐."
+      });
+    } else if (what === 'wallet') {
+      results.push({
+        title: "책/파일첩 사이 또는 결제했던 카운터",
+        desc: "지갑이나 카드는 가방 속 책 사이에 끼거나, 마지막으로 결제한 매점/카페에 두고 왔을 확률이 높아."
+      });
+    } else if (what === 'phone') {
+      results.push({
+        title: "기기 위치 추적 실행 & 주변 소리 확인",
+        desc: "친구 폰으로 전화를 걸어보거나, '기기 찾기' 기능으로 소리를 울려봐! 충전기 근처도 확인해."
+      });
+    } else if (what === 'umbrella') {
+      results.push({
+        title: "건물 입구 우산꽂이 & 의자 아래",
+        desc: "우산이나 텀블러는 손에 들고 다니다가 내려놓고 그냥 가기 쉬워. 마지막 앉은 자리 밑을 봐!"
+      });
+    } else {
+      results.push({
+        title: "가방 전체 뒤집어 털기",
+        desc: "의외로 40% 이상의 분실물은 이미 가방 안에 있어. 구석구석 다 꺼내봐."
+      });
+    }
+
+    // 2. 장소/상황 기반 추천
+    if (where === 'classroom' || action === 'study') {
+      results.push({
+        title: "내 책상 서랍 안쪽 구석 & 옆자리 책상 밑 바닥",
+        desc: "공부나 수업 중엔 책상 사이 틈새나 바닥으로 떨어져 옆 자리 밑으로 들어가는 경우가 많아."
+      });
+    } else if (where === 'restroom') {
+      results.push({
+        title: "화장실 거울 앞 선반 & 옷걸이 핀",
+        desc: "손 씻거나 옷 정리할 때 잠시 올려두고 깜빡했을 수 있어. 바로 화장실 선반으로 가봐!"
+      });
+    } else if (where === 'transit' || action === 'moving') {
+      results.push({
+        title: "오늘 이동한 동선 구석 & 분실물 센터",
+        desc: "이동 중엔 복도/계단 구석이나 버스/택시 의자 사이 틈새에 떨어지기 쉬워. 동선을 따라 눈으로 훑어봐."
+      });
+    } else if (where === 'cafe' || action === 'eating') {
+      results.push({
+        title: "식당/카페 테이블 아래 & 반납대 주변",
+        desc: "음식을 먹거나 치우면서 테이블 밑으로 떨어졌거나 반납대에 같이 놓았을 수 있어."
+      });
+    } else {
+      results.push({
+        title: "오늘 입었던 외투 주머니 & 현관 신발장 위",
+        desc: "외출 전후로 마지막으로 들르는 장소(거울 앞, 신발장, 옷걸이) 주변을 확인해봐."
+      });
+    }
+
+    // 3. 골든타임 보조 추천
+    results.push({
+      title: "주변 분실물 보관함 또는 교탁/안내데스크",
+      desc: "친절한 누군가가 주워서 교탁이나 안내데스크에 올려두었을 수 있으니 물어봐 야!"
+    });
+
+    return results;
+  }
+
+  // 처음으로 리셋
+  function resetForm() {
+    selections.what = '';
+    selections.where = '';
+    selections.action = '';
+
+    document.getElementById('result').style.display = 'none';
+
+    // 모든 단계 활성화 초기화
+    for (let i = 1; i <= 3; i++) {
+      const stepEl = document.getElementById(`step-${i}`);
+      const dotEl = document.getElementById(`dot-${i}`);
+
+      stepEl.classList.remove('active');
+      dotEl.classList.remove('active', 'completed');
+    }
+
+    document.getElementById('dot-4').classList.remove('active');
+
+    // 1단계로 복귀
+    document.getElementById('step-1').classList.add('active');
+    document.getElementById('dot-1').classList.add('active');
+  }
+</script>
+
+</body>
+</html>
